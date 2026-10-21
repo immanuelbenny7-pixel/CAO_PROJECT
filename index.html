@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inside the Multiplier | Computer Architecture Editorial Lab</title>
+  <meta name="description" content="A minimalist, monochrome exploration of signed binary multiplication algorithms inside computer hardware.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- =========================================================================
+       MINIMALIST MONOCHROME HEADER & NAVIGATION
+       ========================================================================= -->
+  <header class="site-header" role="banner">
+    <div class="nav-container">
+      <a href="#home" class="brand" data-view="home" aria-label="Inside the Multiplier Home">
+        <span class="brand-tag">[CAO LAB // 01]</span>
+        <span class="brand-title">INSIDE THE MULTIPLIER</span>
+      </a>
+
+      <nav role="navigation" aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li><a href="#home" class="nav-link active" data-view="home">INDEX</a></li>
+          <li><a href="#signed-magnitude" class="nav-link" data-view="signed-magnitude">SIGNED MAGNITUDE</a></li>
+          <li><a href="#booth" class="nav-link" data-view="booth">BOOTH’S ALGORITHM</a></li>
+          <li><a href="#compare" class="nav-link" data-view="compare">COMPARE</a></li>
+          <li>
+            <button id="btn-open-glossary" class="nav-link nav-glossary-btn" aria-label="Open Register Glossary">
+              GLOSSARY
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       EDITORIAL CINEMATIC VIDEO OVERLAY
+       ========================================================================= -->
+  <div id="video-intro-overlay" class="video-intro-overlay" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="video-title-overlay">
+    <div class="video-modal-card">
+      <div class="video-modal-header">
+        <div class="video-modal-title">
+          <span class="mono-bullet"></span>
+          <h3 id="video-title-overlay">MEET THE HARDWARE DATAPATH</h3>
+        </div>
+        <button id="btn-skip-video" class="btn-skip-intro" aria-label="Skip Hardware Video Intro">
+          SKIP INTRO ➔
+        </button>
+      </div>
+
+      <div class="video-viewport-wrapper">
+        <video id="intro-video-element" preload="metadata" playsinline controlsList="nodownload">
+          <source src="media/signed-magnitude-hardware.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+
+      <div class="video-controls-bar">
+        <p id="video-caption-text" class="video-caption-text">
+          Loading hardware registers and datapath architecture...
+        </p>
+        <div class="video-btn-group">
+          <button id="btn-video-play-pause" class="btn-video-ctrl">PLAY</button>
+          <button id="btn-video-replay" class="btn-video-ctrl">REPLAY</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MAIN CONTENT CONTAINER
+       ========================================================================= -->
+  <main id="main-content">
+
+    <!-- =======================================================================
+         VIEW 1: HOME / INDEX (Dramatic Asymmetric Editorial Hero)
+         ======================================================================= -->
+    <section id="view-home" class="view-section active-view" aria-labelledby="home-headline">
+      
+      <!-- Asymmetric Editorial Hero -->
+      <div class="editorial-hero-grid">
+        <div class="hero-typography-column">
+          <div class="editorial-meta-tag">
+            <span class="meta-dot"></span> ARCHITECTURE &bull; REGISTERS &bull; SILICON
+          </div>
+          <h1 id="home-headline" class="editorial-display-headline">
+            WATCH SIGNED<br>
+            MULTIPLICATION<br>
+            IN SILICON.
+          </h1>
+          <p class="hero-supporting-copy">
+            Explore how modern microprocessors execute signed binary multiplication, one discrete clock pulse and register shift at a time. An interactive architectural study contrasting classical signed-magnitude decoupling with Booth’s 2’s-complement bit-pair recoding.
+          </p>
+          <div class="hero-action-row">
+            <a href="#signed-magnitude" class="btn-editorial-primary" data-switch-view="signed-magnitude">
+              01 / SIGNED MAGNITUDE
+            </a>
+            <a href="#booth" class="btn-editorial-outline" data-switch-view="booth">
+              02 / BOOTH’S ALGORITHM
+            </a>
+          </div>
+        </div>
+
+        <div class="hero-image-column">
+          <div class="hero-image-frame">
+            <img src="media/booths-poster.jpg" alt="High-contrast black-and-white hardware breadboard circuitry" class="hero-bw-image" loading="eager">
+            <div class="hero-image-caption">
+              <span class="caption-index">FIG. 01</span>
+              <span class="caption-title">DISCRETE TTL HARDWARE DATAPATH &bull; BREADBOARD PROTOTYPE</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Editorial Hairline Divider -->
+      <div class="editorial-divider">
+        <span class="divider-label">SELECT ALGORITHM TO SIMULATE</span>
+        <span class="divider-line"></span>
+      </div>
+
+      <!-- Large Asymmetric Editorial Algorithm Showcase -->
+      <div class="editorial-showcase-grid">
+        
+        <!-- Algorithm 01: Signed Magnitude -->
+        <article class="showcase-article">
+          <div class="showcase-header">
+            <span class="article-num">01</span>
+            <div class="article-title-wrap">
+              <span class="article-category">CLASSICAL SEPARATION</span>
+              <h2>SIGNED MAGNITUDE</h2>
+            </div>
+          </div>
+
+          <div class="showcase-media-frame">
+            <img src="media/signed-magnitude-poster.jpg" alt="Signed Magnitude Datapath Architecture" loading="lazy">
+          </div>
+
+          <p class="showcase-desc">
+            Operands are decoupled into independent sign bits and magnitude registers. The final sign is determined by XORing operand signs ($A_s \leftarrow Q_s \oplus B_s$), while the magnitude product is accumulated using the $E$, $A$, and $Q$ register shift chain.
+          </p>
+
+          <div class="showcase-registers-list">
+            <span class="reg-spec">REG B &bull; MULTIPLICAND</span>
+            <span class="reg-spec">REG Q &bull; MULTIPLIER</span>
+            <span class="reg-spec">REG A &bull; ACCUMULATOR</span>
+            <span class="reg-spec">FLIP-FLOP E &bull; CARRY</span>
+            <span class="reg-spec">SC &bull; COUNTER</span>
+          </div>
+
+          <button class="btn-showcase-explore" data-switch-view="signed-magnitude" id="btn-explore-sm">
+            ENTER LAB 01 ➔
+          </button>
+        </article>
+
+        <!-- Algorithm 02: Booth's Algorithm -->
+        <article class="showcase-article">
+          <div class="showcase-header">
+            <span class="article-num">02</span>
+            <div class="article-title-wrap">
+              <span class="article-category">2’S COMPLEMENT RECODING</span>
+              <h2>BOOTH’S ALGORITHM</h2>
+            </div>
+          </div>
+
+          <div class="showcase-media-frame">
+            <img src="media/booths-poster.jpg" alt="Booth 2's Complement Hardware Breadboard" loading="lazy">
+          </div>
+
+          <p class="showcase-desc">
+            Multiplies signed numbers directly in 2’s complement format without requiring separate sign arithmetic. By inspecting bit pairs $(Q_n, Q_{n+1})$, Booth recodes strings of continuous 1s to execute fast additions and subtractions across an arithmetic right shift datapath.
+          </p>
+
+          <div class="showcase-registers-list">
+            <span class="reg-spec">REG BR &bull; MULTIPLICAND</span>
+            <span class="reg-spec">REG QR &bull; MULTIPLIER</span>
+            <span class="reg-spec">REG AC &bull; ACCUMULATOR</span>
+            <span class="reg-spec">FLIP-FLOP QN+1 &bull; HISTORY</span>
+            <span class="reg-spec">SC &bull; COUNTER</span>
+          </div>
+
+          <button class="btn-showcase-explore" data-switch-view="booth" id="btn-explore-booth">
+            ENTER LAB 02 ➔
+          </button>
+        </article>
+
+      </div>
+
+      <!-- How to use this lab section -->
+      <section class="editorial-how-it-works" aria-labelledby="guide-heading">
+        <div class="section-title-wrap">
+          <span class="section-num">03</span>
+          <h3 id="guide-heading">LAB METHODOLOGY</h3>
+        </div>
+
+        <div class="editorial-steps-columns">
+          <div class="editorial-step">
+            <span class="step-idx">I.</span>
+            <h4>SELECT ARCHITECTURE</h4>
+            <p>Choose Signed-Magnitude or Booth’s Algorithm. An optional 8-second cinematic hardware intro introduces the physical registers and signal pathways.</p>
+          </div>
+          <div class="editorial-step">
+            <span class="step-idx">II.</span>
+            <h4>LOAD OPERANDS</h4>
+            <p>Enter custom decimal values or load textbook presets ($23 \times 19$ or $-9 \times -13$). The engine validates register capacities and pre-loads registers.</p>
+          </div>
+          <div class="editorial-step">
+            <span class="step-idx">III.</span>
+            <h4>STEP THROUGH HARDWARE</h4>
+            <p>Advance clock by clock. Observe the high-contrast flowchart branch decisions, register bus illuminates, and the bit-level change history.</p>
+          </div>
+        </div>
+      </section>
+
+    </section>
+
+    <!-- =======================================================================
+         VIEW 2: SIGNED-MAGNITUDE PAGE
+         ======================================================================= -->
+    <section id="view-signed-magnitude" class="view-section" aria-labelledby="sm-heading">
+      
+      <div class="editorial-page-header">
+        <div class="page-meta-row">
+          <span class="meta-tag">EXPERIMENT 01 // CLASSICAL ARCHITECTURE</span>
+          <button id="btn-replay-sm-intro" class="btn-editorial-text" aria-label="Replay Signed-Magnitude Hardware Video">
+            REPLAY HARDWARE INTRO ↺
+          </button>
+        </div>
+        <h1 id="sm-heading" class="editorial-page-title">SIGNED-MAGNITUDE MULTIPLICATION</h1>
+        <p class="editorial-lead-desc">
+          Operands maintain separate sign bits ($0$ positive, $1$ negative) and unsigned magnitude bits. The magnitude is accumulated using the $E:A:Q$ right-shift chain, while the sign is independently calculated as $A_s \leftarrow Q_s \oplus B_s$.
+        </p>
+      </div>
+
+      <!-- Architectural Principle Card -->
+      <div class="editorial-card theory-panel">
+        <div class="card-title-bar">
+          <span class="card-label">ARCHITECTURAL SPECIFICATION &bull; MANO CONVENTION</span>
+          <span class="mono-tag">FIG. 10-1 &bull; 10-2</span>
+        </div>
+        <p>
+          Registers: <strong>B</strong> holds multiplicand magnitude, <strong>Q</strong> holds multiplier magnitude, <strong>A</strong> is cleared to 0, <strong>E</strong> is carry/overflow flip-flop (initially 0), and Sequence Counter <strong>SC</strong> counts $n$ iterations down to 0. Each step inspects the least significant multiplier bit $Q_n$: if $1$, add $B$ to $A$ via parallel adder; then shift right the composite register chain $E:A:Q$ with 0 entering $E$.
+        </p>
+      </div>
+
+      <!-- Controls Panel -->
+      <div class="editorial-card control-panel-card">
+        <div class="card-title-bar">
+          <span class="card-label">INPUT CONFIGURATION</span>
+          <span id="sm-validation-msg" class="validation-label">Range: -31 to +31</span>
+        </div>
+
+        <div class="inputs-row">
+          <div class="input-group">
+            <label for="sm-input-multiplicand">MULTIPLICAND (B)</label>
+            <input type="number" id="sm-input-multiplicand" class="input-control" value="23" placeholder="e.g. 23">
+          </div>
+          <div class="input-group">
+            <label for="sm-input-multiplier">MULTIPLIER (Q)</label>
+            <input type="number" id="sm-input-multiplier" class="input-control" value="19" placeholder="e.g. 19">
+          </div>
+          <div class="input-group">
+            <label for="sm-input-width">MAGNITUDE WIDTH (N)</label>
+            <select id="sm-input-width" class="input-control">
+              <option value="4">4 BITS &bull; [-15, +15]</option>
+              <option value="5" selected>5 BITS &bull; [-31, +31] (COURSE PRESET)</option>
+              <option value="6">6 BITS &bull; [-63, +63]</option>
+              <option value="8">8 BITS &bull; [-255, +255]</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions-row">
+          <div class="btn-group-primary">
+            <button id="sm-btn-calculate" class="btn-editorial-primary">CALCULATE</button>
+            <button id="sm-btn-preset" class="btn-editorial-outline">PRESET: 23 × 19</button>
+            <button id="sm-btn-clear" class="btn-editorial-ghost">CLEAR</button>
+            <button id="sm-btn-reset" class="btn-editorial-ghost">RESET</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result Breakdown HUD -->
+      <div class="editorial-hud-grid">
+        <div class="hud-editorial-cell">
+          <span class="cell-label">DECIMAL ARITHMETIC</span>
+          <span id="sm-hud-decimal" class="cell-val mono">23 × 19 = 437</span>
+        </div>
+        <div class="hud-editorial-cell">
+          <span class="cell-label">SIGNED BINARY OPERANDS</span>
+          <span id="sm-hud-binary" class="cell-val mono">B = 0 | 10111, Q = 0 | 10011</span>
+        </div>
+        <div class="hud-editorial-cell">
+          <span class="cell-label">SIGN CALCULATION</span>
+          <span id="sm-hud-sign" class="cell-val mono">Bs ⊕ Qs = 0 ⊕ 0 = 0 (+)</span>
+        </div>
+        <div class="hud-editorial-cell highlight-cell">
+          <span class="cell-label">FINAL PRODUCT [AQ]</span>
+          <span id="sm-hud-result" class="cell-val mono">01101 10101 (437)</span>
+        </div>
+      </div>
+
+      <!-- Live Register State HUD -->
+      <div class="editorial-card registers-panel">
+        <div class="card-title-bar">
+          <span class="card-label">HARDWARE REGISTER TRACE (0 ➔ E ➔ A ➔ Q)</span>
+          <span class="mono-tag">STEP SYNCHRONIZED</span>
+        </div>
+        <div class="registers-editorial-grid">
+          <div id="sm-card-e" class="reg-editorial-box">
+            <span class="reg-box-label">CARRY (E)</span>
+            <span id="sm-reg-e" class="reg-box-val mono">0</span>
+          </div>
+          <div id="sm-card-a" class="reg-editorial-box">
+            <span class="reg-box-label">ACCUMULATOR (A)</span>
+            <span id="sm-reg-a" class="reg-box-val mono">00000</span>
+          </div>
+          <div id="sm-card-q" class="reg-editorial-box">
+            <span class="reg-box-label">MULTIPLIER (Q)</span>
+            <span id="sm-reg-q" class="reg-box-val mono">10011</span>
+          </div>
+          <div id="sm-card-sc" class="reg-editorial-box">
+            <span class="reg-box-label">COUNTER (SC)</span>
+            <span id="sm-reg-sc" class="reg-box-val mono">5 (101)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stepper Controls Bar -->
+      <div class="editorial-stepper-bar">
+        <div class="stepper-actions">
+          <button id="sm-btn-prev" class="btn-step" aria-label="Previous Step">◀ PREV</button>
+          <button id="sm-btn-play" class="btn-step btn-step-play" aria-label="Play or Pause">PLAY</button>
+          <button id="sm-btn-next" class="btn-step" aria-label="Next Step">NEXT ▶</button>
+          <button id="sm-btn-reset-step" class="btn-step-ghost">RESET</button>
+          <button id="sm-btn-show-all" class="btn-step-ghost">SHOW ALL</button>
+        </div>
+
+        <div class="stepper-progress-wrap">
+          <span id="sm-progress-text" class="stepper-status-text">Step 0 of 8 &bull; Initialization</span>
+          <div class="progress-track">
+            <div id="sm-progress-bar" class="progress-bar"></div>
+          </div>
+        </div>
+
+        <div class="stepper-speed-wrap">
+          <label for="sm-speed-select">SPEED:</label>
+          <select id="sm-speed-select" class="select-editorial">
+            <option value="2000">0.5×</option>
+            <option value="1200" selected>1.0×</option>
+            <option value="700">1.5×</option>
+            <option value="350">2.0×</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="sm-jump-flowchart" class="mobile-flowchart-btn">↓ VIEW FLOWCHART &amp; HARDWARE</button>
+
+      <!-- Visualizers Split Grid -->
+      <div class="editorial-visualizers-grid">
+        <!-- Flowchart Panel -->
+        <div id="sm-flowchart-panel" class="editorial-card visualizer-box">
+          <div class="card-title-bar">
+            <span class="card-label">FLOWCHART ARCHITECTURE</span>
+            <span class="mono-tag">COURSE FIG. 10-1</span>
+          </div>
+          <div class="svg-canvas-wrapper" id="sm-flowchart-container"></div>
+          <div id="sm-step-narrative" class="panel-narrative mono">
+            Flowchart highlights active branch and decision paths as you step through.
+          </div>
+        </div>
+
+        <!-- Hardware Panel -->
+        <div id="sm-hardware-panel" class="editorial-card visualizer-box">
+          <div class="card-title-bar">
+            <span class="card-label">PHYSICAL HARDWARE SCHEMATIC</span>
+            <span class="mono-tag">COURSE FIG. 10-2</span>
+          </div>
+          <div class="svg-canvas-wrapper" id="sm-hardware-container"></div>
+          <div class="panel-narrative mono">
+            Hover components to inspect physical adder lines, carry flip-flop, and registers.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step Progression Table -->
+      <div class="editorial-card table-panel">
+        <div class="card-title-bar">
+          <span class="card-label">REGISTER PROGRESSION LOG</span>
+          <span class="mono-tag">COLUMNS: STEP &bull; OP &bull; E &bull; A &bull; Q &bull; SC</span>
+        </div>
+        <div class="table-scroll-wrapper">
+          <table class="editorial-table">
+            <thead>
+              <tr>
+                <th scope="col">STEP</th>
+                <th scope="col">OPERATION</th>
+                <th scope="col">E</th>
+                <th scope="col">A</th>
+                <th scope="col">Q</th>
+                <th scope="col">SC</th>
+                <th scope="col">HARDWARE LOG</th>
+              </tr>
+            </thead>
+            <tbody id="sm-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =======================================================================
+         VIEW 3: BOOTH'S ALGORITHM PAGE
+         ======================================================================= -->
+    <section id="view-booth" class="view-section" aria-labelledby="booth-heading">
+      
+      <div class="editorial-page-header">
+        <div class="page-meta-row">
+          <span class="meta-tag">EXPERIMENT 02 // 2’S COMPLEMENT RECODING</span>
+          <button id="btn-replay-booth-intro" class="btn-editorial-text" aria-label="Replay Booth Hardware Video">
+            REPLAY HARDWARE INTRO ↺
+          </button>
+        </div>
+        <h1 id="booth-heading" class="editorial-page-title">BOOTH’S MULTIPLICATION ALGORITHM</h1>
+        <p class="editorial-lead-desc">
+          Directly multiplies signed 2's complement numbers without separate sign logic. By pairing adjacent multiplier bits $(Q_n, Q_{n+1})$, strings of $1$s are recoded into single additions and subtractions across an arithmetic right shift datapath.
+        </p>
+      </div>
+
+      <!-- Booth Decision Table -->
+      <div class="editorial-card theory-panel">
+        <div class="card-title-bar">
+          <span class="card-label">BIT-PAIR DECISION RULES (QN QN+1)</span>
+          <span class="mono-tag">2’S COMPLEMENT ADDER CONTROL</span>
+        </div>
+        <div class="booth-decision-editorial-grid">
+          <div class="decision-cell">
+            <span class="pair mono">[01]</span>
+            <span class="desc">ADD BR &bull; <strong>AC ← AC + BR</strong></span>
+          </div>
+          <div class="decision-cell">
+            <span class="pair mono">[10]</span>
+            <span class="desc">SUBTRACT BR &bull; <strong>AC ← AC − BR</strong> (BR̄ + 1)</span>
+          </div>
+          <div class="decision-cell">
+            <span class="pair mono">[00]</span>
+            <span class="desc">NO ARITHMETIC OP &bull; DIRECT ASHR</span>
+          </div>
+          <div class="decision-cell">
+            <span class="pair mono">[11]</span>
+            <span class="desc">NO ARITHMETIC OP &bull; DIRECT ASHR</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls Panel -->
+      <div class="editorial-card control-panel-card">
+        <div class="card-title-bar">
+          <span class="card-label">INPUT CONFIGURATION</span>
+          <span id="booth-validation-msg" class="validation-label">Range: -16 to +15</span>
+        </div>
+
+        <div class="inputs-row">
+          <div class="input-group">
+            <label for="booth-input-multiplicand">MULTIPLICAND (BR)</label>
+            <input type="number" id="booth-input-multiplicand" class="input-control" value="-9" placeholder="e.g. -9">
+          </div>
+          <div class="input-group">
+            <label for="booth-input-multiplier">MULTIPLIER (QR)</label>
+            <input type="number" id="booth-input-multiplier" class="input-control" value="-13" placeholder="e.g. -13">
+          </div>
+          <div class="input-group">
+            <label for="booth-input-width">REGISTER WIDTH (N)</label>
+            <select id="booth-input-width" class="input-control">
+              <option value="4">4 BITS &bull; [-8, +7]</option>
+              <option value="5" selected>5 BITS &bull; [-16, +15] (COURSE PRESET)</option>
+              <option value="6">6 BITS &bull; [-32, +31]</option>
+              <option value="8">8 BITS &bull; [-128, +127]</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions-row">
+          <div class="btn-group-primary">
+            <button id="booth-btn-calculate" class="btn-editorial-primary">CALCULATE</button>
+            <button id="booth-btn-preset" class="btn-editorial-outline">PRESET: -9 × -13</button>
+            <button id="booth-btn-clear" class="btn-editorial-ghost">CLEAR</button>
+            <button id="booth-btn-reset" class="btn-editorial-ghost">RESET</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result Breakdown HUD -->
+      <div class="editorial-hud-grid">
+        <div class="hud-editorial-cell">
+          <span class="cell-label">DECIMAL ARITHMETIC</span>
+          <span id="booth-hud-decimal" class="cell-val mono">-9 × -13 = 117</span>
+        </div>
+        <div class="hud-editorial-cell">
+          <span class="cell-label">2’S COMPLEMENT OPERANDS</span>
+          <span id="booth-hud-binary" class="cell-val mono">BR = 10111, -BR = 01001, QR = 10011</span>
+        </div>
+        <div class="hud-editorial-cell">
+          <span class="cell-label">ACTIVE BIT PAIR</span>
+          <span id="booth-hud-pair" class="cell-val mono">Qn Qn+1 = [10]</span>
+        </div>
+        <div class="hud-editorial-cell highlight-cell">
+          <span class="cell-label">PRODUCT IN [AC:QR]</span>
+          <span id="booth-hud-result" class="cell-val mono">00011 10101 (117)</span>
+        </div>
+      </div>
+
+      <!-- Live Register State HUD -->
+      <div class="editorial-card registers-panel">
+        <div class="card-title-bar">
+          <span class="card-label">BOOTH HARDWARE REGISTERS &bull; ARITHMETIC SHIFT (ASHR)</span>
+          <span class="mono-tag">STEP SYNCHRONIZED</span>
+        </div>
+        <div class="registers-editorial-grid">
+          <div id="booth-card-ac" class="reg-editorial-box">
+            <span class="reg-box-label">ACCUMULATOR (AC)</span>
+            <span id="booth-reg-ac" class="reg-box-val mono">00000</span>
+          </div>
+          <div id="booth-card-qr" class="reg-editorial-box">
+            <span class="reg-box-label">MULTIPLIER (QR)</span>
+            <span id="booth-reg-qr" class="reg-box-val mono">10011</span>
+          </div>
+          <div id="booth-card-qn1" class="reg-editorial-box">
+            <span class="reg-box-label">FLIP-FLOP (QN+1)</span>
+            <span id="booth-reg-qn1" class="reg-box-val mono">0</span>
+          </div>
+          <div id="booth-card-sc" class="reg-editorial-box">
+            <span class="reg-box-label">COUNTER (SC)</span>
+            <span id="booth-reg-sc" class="reg-box-val mono">5</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stepper Controls Bar -->
+      <div class="editorial-stepper-bar">
+        <div class="stepper-actions">
+          <button id="booth-btn-prev" class="btn-step" aria-label="Previous Step">◀ PREV</button>
+          <button id="booth-btn-play" class="btn-step btn-step-play" aria-label="Play or Pause">PLAY</button>
+          <button id="booth-btn-next" class="btn-step" aria-label="Next Step">NEXT ▶</button>
+          <button id="booth-btn-reset-step" class="btn-step-ghost">RESET</button>
+          <button id="booth-btn-show-all" class="btn-step-ghost">SHOW ALL</button>
+        </div>
+
+        <div class="stepper-progress-wrap">
+          <span id="booth-progress-text" class="stepper-status-text">Step 0 of 8 &bull; Initial State</span>
+          <div class="progress-track">
+            <div id="booth-progress-bar" class="progress-bar"></div>
+          </div>
+        </div>
+
+        <div class="stepper-speed-wrap">
+          <label for="booth-speed-select">SPEED:</label>
+          <select id="booth-speed-select" class="select-editorial">
+            <option value="2000">0.5×</option>
+            <option value="1200" selected>1.0×</option>
+            <option value="700">1.5×</option>
+            <option value="350">2.0×</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="booth-jump-flowchart" class="mobile-flowchart-btn">↓ VIEW FLOWCHART &amp; HARDWARE</button>
+
+      <!-- Visualizers Split Grid -->
+      <div class="editorial-visualizers-grid">
+        <!-- Flowchart Panel -->
+        <div id="booth-flowchart-panel" class="editorial-card visualizer-box">
+          <div class="card-title-bar">
+            <span class="card-label">BOOTH FLOWCHART ARCHITECTURE</span>
+            <span class="mono-tag">COURSE REFERENCE</span>
+          </div>
+          <div class="svg-canvas-wrapper" id="booth-flowchart-container"></div>
+          <div id="booth-step-narrative" class="panel-narrative mono">
+            Flowchart highlights 3-way branch (10, 01, 00/11) and loop back path.
+          </div>
+        </div>
+
+        <!-- Hardware Panel -->
+        <div id="booth-hardware-panel" class="editorial-card visualizer-box">
+          <div class="card-title-bar">
+            <span class="card-label">PHYSICAL HARDWARE SCHEMATIC</span>
+            <span class="mono-tag">BREADBOARD &amp; ICs</span>
+          </div>
+          <div class="svg-canvas-wrapper" id="booth-hardware-container"></div>
+          <div class="panel-narrative mono">
+            Hover BR, Complementer/Adder, AC, QR, or Qn+1 flip-flop for architecture specs.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step Progression Table -->
+      <div class="editorial-card table-panel">
+        <div class="card-title-bar">
+          <span class="card-label">REGISTER PROGRESSION LOG</span>
+          <span class="mono-tag">COLUMNS: STEP &bull; OP &bull; AC &bull; QR &bull; QN+1 &bull; SC</span>
+        </div>
+        <div class="table-scroll-wrapper">
+          <table class="editorial-table">
+            <thead>
+              <tr>
+                <th scope="col">STEP</th>
+                <th scope="col">OPERATION</th>
+                <th scope="col">AC</th>
+                <th scope="col">QR</th>
+                <th scope="col">QN+1</th>
+                <th scope="col">SC</th>
+                <th scope="col">HARDWARE LOG</th>
+              </tr>
+            </thead>
+            <tbody id="booth-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =======================================================================
+         VIEW 4: COMPARISON PAGE
+         ======================================================================= -->
+    <section id="view-compare" class="view-section" aria-labelledby="compare-heading">
+      
+      <div class="editorial-page-header">
+        <div class="page-meta-row">
+          <span class="meta-tag">ARCHITECTURAL ANALYSIS</span>
+        </div>
+        <h1 id="compare-heading" class="editorial-page-title">COMPARATIVE EVALUATION</h1>
+        <p class="editorial-lead-desc">
+          Contrasting representation models, register organization, shift mechanisms, cycle efficiency, and circuit complexity.
+        </p>
+      </div>
+
+      <!-- Comparison Matrix -->
+      <div class="editorial-card table-panel">
+        <div class="card-title-bar">
+          <span class="card-label">ARCHITECTURAL COMPARISON MATRIX</span>
+          <span class="mono-tag">SIDE-BY-SIDE</span>
+        </div>
+        <div class="table-scroll-wrapper">
+          <table class="editorial-table compare-table">
+            <thead>
+              <tr>
+                <th scope="col">DIMENSION</th>
+                <th scope="col">SIGNED-MAGNITUDE MULTIPLIER</th>
+                <th scope="col">BOOTH’S 2’S COMPLEMENT MULTIPLIER</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Number Format</strong></td>
+                <td>Decoupled sign bit (0/1) from absolute magnitude. Negative numbers have identical magnitude bits to positive numbers.</td>
+                <td>Integrated 2’s complement notation. Negative numbers carry implicit negative weight on MSB ($-2^{n-1}$).</td>
+              </tr>
+              <tr>
+                <td><strong>Sign Computation</strong></td>
+                <td>Handled independently out-of-band: $A_s \leftarrow Q_s \oplus B_s$. Product sign appended after magnitude calculation.</td>
+                <td>Inherently embedded in 2’s complement algebra. No separate sign flip-flops or XOR gates required.</td>
+              </tr>
+              <tr>
+                <td><strong>Register Topology</strong></td>
+                <td>Registers: <strong>B</strong>, <strong>Q</strong>, <strong>A</strong>, <strong>E</strong> (Carry/Overflow bit), <strong>SC</strong>.</td>
+                <td>Registers: <strong>BR</strong>, <strong>QR</strong>, <strong>AC</strong>, <strong>Qn+1</strong> (1-bit history flip-flop), <strong>SC</strong>.</td>
+              </tr>
+              <tr>
+                <td><strong>Shift Mechanism</strong></td>
+                <td>Logical right shift of $E:A:Q$. New 0 shifted into $E$, previous $E$ into $A$, $A$ into $Q$.</td>
+                <td>Arithmetic right shift (ashr) of $AC:QR:Q_{n+1}$. The sign bit ($AC_0$) is duplicated (sign-extended).</td>
+              </tr>
+              <tr>
+                <td><strong>Arithmetic Logic</strong></td>
+                <td>Only Addition ($EA \leftarrow A + B$) and shift.</td>
+                <td>Both Addition ($AC \leftarrow AC + BR$) and Subtraction ($AC \leftarrow AC - BR$ via $\overline{BR}+1$).</td>
+              </tr>
+              <tr>
+                <td><strong>Efficiency on 1s</strong></td>
+                <td>Executes an addition for every $1$ bit. In worst case ($11111$), requires $n$ full additions.</td>
+                <td>Recodes continuous strings of $1$s into a single subtraction and addition. Substantially faster on runs of 1s.</td>
+              </tr>
+              <tr>
+                <td><strong>Silicon Complexity</strong></td>
+                <td>Unidirectional adder, but requires auxiliary sign multiplexers and formatting logic.</td>
+                <td>Requires adder/subtractor control and flip-flop $Q_{n+1}$, but unifies positive and negative datapath.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Interactive Sandbox -->
+      <div class="editorial-card sandbox-panel">
+        <div class="card-title-bar">
+          <span class="card-label">INTERACTIVE EVALUATION SANDBOX</span>
+          <span class="mono-tag">REAL-TIME CYCLE COUNT</span>
+        </div>
+        <p class="sandbox-desc">
+          Enter two integers to compare step counts, addition operations, and shift sequences across both architectures:
+        </p>
+
+        <div class="inputs-row" style="margin-top: 1.5rem;">
+          <div class="input-group">
+            <label for="comp-input-m1">OPERAND 1</label>
+            <input type="number" id="comp-input-m1" class="input-control" value="7" placeholder="e.g. 7">
+          </div>
+          <div class="input-group">
+            <label for="comp-input-m2">OPERAND 2</label>
+            <input type="number" id="comp-input-m2" class="input-control" value="3" placeholder="e.g. 3">
+          </div>
+          <div class="input-group" style="flex: 0; min-width: 140px;">
+            <label>&nbsp;</label>
+            <button id="comp-btn-run" class="btn-editorial-primary" style="width: 100%;">EVALUATE</button>
+          </div>
+        </div>
+
+        <div class="sandbox-split-grid">
+          <div class="sandbox-column">
+            <h5>SIGNED-MAGNITUDE EXECUTION</h5>
+            <div class="sandbox-metric">Total Steps: <strong id="comp-sm-steps" class="mono">--</strong></div>
+            <div class="sandbox-metric">Additions: <strong id="comp-sm-adds" class="mono">--</strong></div>
+            <div class="sandbox-metric">Shifts: <strong id="comp-sm-shifts" class="mono">--</strong></div>
+          </div>
+
+          <div class="sandbox-column">
+            <h5>BOOTH’S ALGORITHM EXECUTION</h5>
+            <div class="sandbox-metric">Total Steps: <strong id="comp-booth-steps" class="mono">--</strong></div>
+            <div class="sandbox-metric">Add/Sub Ops: <strong id="comp-booth-addsub" class="mono">--</strong></div>
+            <div class="sandbox-metric">Arithmetic Shifts: <strong id="comp-booth-shifts" class="mono">--</strong></div>
+          </div>
+        </div>
+
+        <div id="comp-summary-text" class="panel-narrative mono" style="margin-top: 1.5rem;">
+          Analysis ready. Click Evaluate to compare performance.
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- =========================================================================
+       EDITORIAL GLOSSARY MODAL
+       ========================================================================= -->
+  <div id="glossary-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="glossary-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="glossary-title">REGISTER &amp; HARDWARE GLOSSARY</h3>
+        <button id="btn-close-glossary" class="btn-close-modal" aria-label="Close Glossary">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="glossary-entry">
+          <h4 class="glossary-term">ACCUMULATOR (A / AC)</h4>
+          <p class="glossary-def">A primary register that holds the initial zero and subsequent running partial products during multiplication. In final output, it holds the most significant half of the product.</p>
+        </div>
+
+        <div class="glossary-entry">
+          <h4 class="glossary-term">SEQUENCE COUNTER (SC)</h4>
+          <p class="glossary-def">A down-counter initialized to the bit width of the multiplier ($n$). It decrements on each shift cycle until reaching zero, signaling hardware completion.</p>
+        </div>
+
+        <div class="glossary-entry">
+          <h4 class="glossary-term">CARRY / OVERFLOW FLIP-FLOP (E)</h4>
+          <p class="glossary-def">In signed-magnitude multiplication, a 1-bit flip-flop holding the carry-out generated by the parallel adder. On each shift right step, the bit in $E$ shifts into the MSB of Accumulator $A$, and $E$ is reset to $0$.</p>
+        </div>
+
+        <div class="glossary-entry">
+          <h4 class="glossary-term">PREVIOUS MULTIPLIER BIT (QN+1)</h4>
+          <p class="glossary-def">A 1-bit flip-flop used in Booth’s algorithm, initialized to $0$. It records the bit shifted out of the multiplier ($QR$) during the previous arithmetic right shift, forming the pair $(Q_n, Q_{n+1})$.</p>
+        </div>
+
+        <div class="glossary-entry">
+          <h4 class="glossary-term">ARITHMETIC RIGHT SHIFT (ASHR)</h4>
+          <p class="glossary-def">A right shift that preserves the sign of a 2's complement number by copying (replicating) the most significant bit ($AC_0$) into the new MSB rather than inserting a $0$.</p>
+        </div>
+
+        <div class="glossary-entry">
+          <h4 class="glossary-term">LOGICAL RIGHT SHIFT (SHR)</h4>
+          <p class="glossary-def">A right shift where a $0$ is shifted into the most significant position. Used for unsigned magnitudes and in the $E:A:Q$ signed-magnitude chain.</p>
+        </div>
+
+        <div class="glossary-entry">
+          <h4 class="glossary-term">BOOTH’S BIT-PAIR RECODING</h4>
+          <p class="glossary-def">A technique where adjacent multiplier bits are paired: $01$ triggers an addition, $10$ triggers a subtraction, and $00$ / $11$ skip arithmetic operations, drastically accelerating runs of identical bits.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MINIMALIST MONOCHROME FOOTER
+       ========================================================================= -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-container">
+      <div class="footer-info">
+        <p class="footer-brand">INSIDE THE MULTIPLIER</p>
+        <p class="footer-sub">Computer Organization and Architecture (CAO) &bull; Hardware Laboratory</p>
+      </div>
+      <ul class="footer-nav">
+        <li><a href="#home" data-view="home">INDEX</a></li>
+        <li><a href="#signed-magnitude" data-view="signed-magnitude">SIGNED MAGNITUDE</a></li>
+        <li><a href="#booth" data-view="booth">BOOTH’S ALGORITHM</a></li>
+        <li><a href="#compare" data-view="compare">EVALUATION</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/algorithms.js"></script>
+  <script src="js/visualizers.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
